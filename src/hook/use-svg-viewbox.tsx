@@ -5,6 +5,50 @@ type Props = {
   initialViewBoxValue: string;
 };
 
+// utility fn for setting the html attribute
+function setSVGViewBoxAttr(
+  elem: SVGSVGElement,
+  value: string,
+  shouldAnimate: boolean = true
+) {
+  // suppress animations
+  if (!shouldAnimate) {
+    elem.setAttribute("viewBox", value);
+    return;
+  }
+
+  // reduced motion
+  animateViewBox(elem, value);
+
+  // animations
+}
+
+function animateViewBox(
+  elem: SVGSVGElement,
+  value: string,
+  reducedMotion: boolean = false
+) {
+  const keyframeAnimationOptions: KeyframeEffectOptions = {
+    duration: 250,
+    easing: "ease-in-out",
+    fill: "forwards",
+  };
+
+  const reducedMotionAnimation = elem.animate(
+    [{ opacity: 0 }],
+    keyframeAnimationOptions
+  );
+
+  reducedMotionAnimation.onfinish = () => {
+    elem.setAttribute("viewBox", value);
+    elem.animate([{ opacity: 1 }], keyframeAnimationOptions);
+  };
+
+  reducedMotionAnimation.oncancel = () => {
+    // handle animation cancellation
+  };
+}
+
 // possible third arg: easing function
 function useSvgViewBox({ ref, initialViewBoxValue }: Props) {
   const [viewBox, setViewBoxValueInternal] = useState(initialViewBoxValue);
@@ -13,7 +57,7 @@ function useSvgViewBox({ ref, initialViewBoxValue }: Props) {
   useEffect(() => {
     if (ref?.current) {
       // perform initial animation
-      setSVGViewBoxAttr(ref.current, initialViewBoxValue);
+      setSVGViewBoxAttr(ref.current, initialViewBoxValue, false);
     }
   }, [ref, initialViewBoxValue]);
 
@@ -25,12 +69,6 @@ function useSvgViewBox({ ref, initialViewBoxValue }: Props) {
       setViewBoxValueInternal(newValue);
     }
   }
-
-  // utility fn for setting the html attribute
-  function setSVGViewBoxAttr(elem: SVGSVGElement, value: string) {
-    elem.setAttribute("viewBox", value);
-  }
-
   return [viewBox, safelySetViewBox] as const;
 }
 
